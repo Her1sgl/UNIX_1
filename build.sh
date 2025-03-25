@@ -25,7 +25,7 @@ clean_dir() {
 
 trap 'clean_dir 130' INT
 trap 'clean_dir 143' TERM
-trap 'clean_dir S?' EXIT
+trap 'clean_dir $?' EXIT
 
 
 case "$SOURCE_FILE" in
