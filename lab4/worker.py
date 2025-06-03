@@ -11,6 +11,8 @@ import traceback
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+shutdown_flag = False
+
 def connect_to_kafka():
     max_retries = 10
     retry_delay = 15
@@ -46,10 +48,9 @@ except Exception as e:
     exit(1)
 
 def signal_handler(sig, frame):
-    logger.info(f"Received signal {sig}. Shutting down gracefully...")
-    logger.debug("Closing Kafka consumer")
-    consumer.close()
-    sys.exit(0)
+    global shutdown_flag
+    logger.info(f"Received signal {sig}. Finishing current task...")
+    shutdown_flag = True
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
@@ -64,3 +65,8 @@ for message in consumer:
         time.sleep(1)  # Simulate processing
     except Exception as e:
         logger.error(f"Error processing message: {traceback.format_exc()}")
+    
+    if shutdown_flag:
+        logger.info("Completing shutdown")
+        consumer.close()  # Коммит оффсетов и выход из группы
+        sys.exit(0)
