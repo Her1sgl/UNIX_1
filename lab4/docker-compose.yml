@@ -7,7 +7,7 @@ services:
     ports:
       - "2181:2181"
     volumes:
-      - ./zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-data:/var/lib/zookeeper/data
     networks:
       - mynet
 
@@ -23,7 +23,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     volumes:
-      - ./kafka-data:/var/lib/kafka/data
+      - kafka-data:/var/lib/kafka/data
     networks:
       - mynet
 
@@ -65,3 +65,7 @@ services:
 networks:
   mynet:
     driver: bridge
+
+volumes:
+  zookeeper-data:
+  kafka-data:
