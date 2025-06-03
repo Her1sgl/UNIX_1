@@ -1,10 +1,15 @@
+from flask import Flask, jsonify
+from kafka import KafkaProducer
 import logging
 import time
-from kafka import KafkaProducer
+import json
+import uuid
 import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
 
 def connect_to_kafka():
     max_retries = 10
@@ -23,11 +28,17 @@ def connect_to_kafka():
                 logger.error("Failed to connect to Kafka after all retries")
                 raise
 
+producer = connect_to_kafka()
+
+@app.route('/generate', methods=['POST'])
+def generate_task():
+    task_id = str(uuid.uuid4())
+    message = json.dumps({'task_id': task_id, 'timestamp': time.time()})
+    key = task_id.encode('utf-8')
+    producer.send('tasks', key=key, value=message.encode('utf-8'))
+    producer.flush()
+    logger.info(f" [x] Sent {message}")
+    return jsonify({'task_id': task_id, 'status': 'Task sent to Kafka'})
+
 if __name__ == '__main__':
-    producer = connect_to_kafka()
-    while True:
-        message = f"Task {time.time()}"
-        key = str(time.time()).encode('utf-8')  # Добавляем уникальный ключ
-        producer.send('tasks', key=key, value=message.encode('utf-8'))
-        logger.info(f" [x] Sent {message}")
-        time.sleep(5)
+    app.run(host='0.0.0.0', port=5000)
