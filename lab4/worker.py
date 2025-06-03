@@ -1,6 +1,8 @@
-import logging
-import time
 from kafka import KafkaConsumer
+import logging
+import json
+import random
+import time
 import os
 
 logging.basicConfig(level=logging.INFO)
@@ -15,7 +17,8 @@ def connect_to_kafka():
             consumer = KafkaConsumer(
                 'tasks',
                 bootstrap_servers=bootstrap_servers,
-                group_id='worker_group'
+                group_id='worker_group',
+                auto_offset_reset='earliest'
             )
             logger.info("Successfully connected to Kafka")
             return consumer
@@ -27,8 +30,11 @@ def connect_to_kafka():
                 logger.error("Failed to connect to Kafka after all retries")
                 raise
 
-if __name__ == '__main__':
-    consumer = connect_to_kafka()
-    for message in consumer:
-        logger.info(f" [x] Received {message.value.decode('utf-8')}")
-        time.sleep(1)
+consumer = connect_to_kafka()
+
+for message in consumer:
+    task = json.loads(message.value.decode('utf-8'))
+    task_id = message.key.decode('utf-8') if message.key else 'unknown'
+    result = random.randint(1, 100)
+    logger.info(f"Task {task_id} processed with result: {result}")
+    time.sleep(1)  # Simulate processing
