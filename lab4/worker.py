@@ -4,9 +4,11 @@ import json
 import random
 import time
 import os
+import signal
+import sys
 import traceback
 
-logging.basicConfig(level=logging.DEBUG)  # Увеличен уровень логирования
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def connect_to_kafka():
@@ -21,9 +23,9 @@ def connect_to_kafka():
                 group_id='worker_group',
                 auto_offset_reset='earliest',
                 enable_auto_commit=True,
-                session_timeout_ms=30000,  
-                heartbeat_interval_ms=10000,  
-                max_poll_interval_ms=600000  
+                session_timeout_ms=30000,
+                heartbeat_interval_ms=10000,
+                max_poll_interval_ms=600000
             )
             consumer.subscribe(['tasks'])
             logger.info("Successfully connected to Kafka")
@@ -37,11 +39,20 @@ def connect_to_kafka():
                 raise
 
 try:
-    time.sleep(60)  # Увеличена задержка для синхронизации
+    time.sleep(60)
     consumer = connect_to_kafka()
 except Exception as e:
     logger.error(f"Failed to initialize Kafka consumer: {traceback.format_exc()}")
     exit(1)
+
+def signal_handler(sig, frame):
+    logger.info(f"Received signal {sig}. Shutting down gracefully...")
+    logger.debug("Closing Kafka consumer")
+    consumer.close()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 for message in consumer:
     try:
