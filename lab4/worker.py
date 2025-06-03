@@ -21,11 +21,11 @@ def connect_to_kafka():
                 group_id='worker_group',
                 auto_offset_reset='earliest',
                 enable_auto_commit=True,
-                session_timeout_ms=30000,  # Увеличено время сессии
-                heartbeat_interval_ms=10000,  # Увеличен интервал heartbeat
-                max_poll_interval_ms=600000  # Увеличен интервал опроса
+                session_timeout_ms=30000,  
+                heartbeat_interval_ms=10000,  
+                max_poll_interval_ms=600000  
             )
-            consumer.subscribe(['tasks'])  # Явная подписка на топик
+            consumer.subscribe(['tasks'])
             logger.info("Successfully connected to Kafka")
             return consumer
         except Exception as e:
